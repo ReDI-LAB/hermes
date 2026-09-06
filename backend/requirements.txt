@@ -8,4 +8,4 @@ pydantic_core==2.46.4
 starlette==1.6.0
 typing-inspection==0.4.3
 typing_extensions==4.16.0
-uvicorn==2.1.4
+uvicorn==0.52.4
