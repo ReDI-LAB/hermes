@@ -1,14 +1,23 @@
 -- Project Hermes MVP schema.
--- Source of truth for the database structure. 
-
--- Model: Area 1:n Vendor; Category 1:n Product; Vendor n:m Product via Offering;
---        Offering 0:1 Activity_Details.
+-- Source of truth for the database structure. SQLAlchemy models mirror these
+-- tables; Flyway owns all migrations.
+--
+-- Model: Area 1:n Vendor; Category 1:n Product; Attribute 1:n Product;
+--        Vendor n:m Product via Offering; Offering 0:1 Activity_Details.
 
 CREATE TABLE categories (
     category_id   TEXT PRIMARY KEY,
     category_name TEXT NOT NULL,
     description   TEXT,
     sort_order    INTEGER NOT NULL DEFAULT 0
+);
+
+-- Product-level filter attributes (Alcoholic, Non-Alcoholic, Vegan, Non-Vegan).
+CREATE TABLE attributes (
+    attribute_id   TEXT PRIMARY KEY,
+    attribute_name TEXT NOT NULL,
+    description    TEXT,
+    sort_order     INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE areas (
@@ -32,7 +41,8 @@ CREATE TABLE products (
     product_name   TEXT NOT NULL,
     variant        TEXT,
     unit           TEXT,
-    is_traditional BOOLEAN NOT NULL DEFAULT FALSE
+    is_traditional BOOLEAN NOT NULL DEFAULT FALSE,
+    attribute_id   TEXT REFERENCES attributes (attribute_id)
 );
 
 CREATE TABLE offerings (
@@ -55,9 +65,9 @@ CREATE TABLE activity_details (
     access_note    TEXT
 );
 
--- Indexes supporting the core Category -> Product -> Max Price -> Vendor query
--- and the Price / Product sort options.
+-- Indexes supporting the Category / Attribute / Product / Price filters.
 CREATE INDEX idx_products_category ON products (category_id);
+CREATE INDEX idx_products_attribute ON products (attribute_id);
 CREATE INDEX idx_offerings_product ON offerings (product_id);
 CREATE INDEX idx_offerings_vendor ON offerings (vendor_id);
 CREATE INDEX idx_offerings_price ON offerings (price_eur);
