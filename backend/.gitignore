@@ -2,3 +2,11 @@ venv/
 __pycache__/
 .env
 *.pyc
+.DS_Store
+.pytest_cache/
+
+# Flyway CLI + secrets (never commit)
+flyway.conf
+flyway.tar.gz
+flyway-13.5.0/
+*.tar.gz

@@ -1,24 +1,39 @@
-"""
-Project Hermes — backend starter.
-Just proves the server runs and returns real-shaped JSON.
-No database yet — categories are hardcoded from the sample dataset.
-"""
+"""FastAPI application entrypoint."""
+from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
-app = FastAPI(title="Project Hermes API")
+from config import get_settings
+from db import engine
+from routers import catalog, price
 
-# Placeholder data — will be replaced by a real Supabase query later.
-CATEGORIES = ["Food", "Beverages", "Activities"]
+settings = get_settings()
+
+app = FastAPI(
+    title=settings.app_name,
+    version="0.1.0",
+    description=(
+        "Price-transparency API for Oktoberfest visitors (Project Hermes MVP). "
+        "Navigate Category -> Product -> Max Price to compare vendors."
+    ),
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+app.include_router(catalog.router)
+app.include_router(price.router)
 
 
-@app.get("/")
-def health_check():
-    """Quick check that the server is alive."""
-    return {"status": "ok", "message": "Hermes backend is running"}
-
-
-@app.get("/api/v1/categories")
-def get_categories():
-    """Matches the /categories endpoint in the API contract."""
-    return {"categories": CATEGORIES}
+@app.get("/health", tags=["meta"])
+async def health():
+    """Liveness + database connectivity check."""
+    async with engine.connect() as conn:
+        await conn.execute(text("SELECT 1"))
+    return {"status": "ok"}
