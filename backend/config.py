@@ -3,8 +3,17 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def to_asyncpg_url(url: str) -> str:
+    """Accept postgres://, postgresql://, or postgresql+asyncpg:// (Render / Supabase)."""
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://") :]
+    if url.startswith("postgresql://") and "+asyncpg" not in url:
+        url = "postgresql+asyncpg://" + url[len("postgresql://") :]
+    return url.replace("sslmode=require", "ssl=require")
 
 
 class Settings(BaseSettings):
@@ -18,12 +27,19 @@ class Settings(BaseSettings):
         description="Async SQLAlchemy connection URL.",
     )
 
-    app_name: str = "Project Hermes API"
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_database_url(cls, value: object) -> object:
+        if isinstance(value, str):
+            return to_asyncpg_url(value)
+        return value
+
+    app_name: str = "Oktoberfest Pricing API"
     cors_origins: list[str] = Field(
         default_factory=lambda: ["*"],
-        description="Allowed CORS origins for the (future) frontend.",
+        description="Allowed CORS origins for the frontend.",
     )
-    default_page_size: int = 50
+    default_page_size: int = 200
     max_page_size: int = 200
 
 

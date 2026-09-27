@@ -13,10 +13,11 @@ settings = get_settings()
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.1.0",
+    version="0.2.0",
     description=(
-        "Price-transparency API for Oktoberfest visitors (Project Hermes MVP). "
-        "Navigate Category -> Product -> Max Price to compare vendors."
+        "Oktoberfest pricing app API (Project Hermes MVP). "
+        "Filter Category -> Attribute -> Product -> Price, then search offerings "
+        "to compare vendors, products and prices."
     ),
 )
 
