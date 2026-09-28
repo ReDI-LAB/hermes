@@ -18,6 +18,7 @@ from sqlalchemy.orm import selectinload
 from config import get_settings
 from db import get_session
 from models import Offering, Product, Vendor
+from routers.catalog import apply_attribute_filter
 from schemas import OfferingOut, PriceRange, SearchResponse
 
 router = APIRouter(tags=["price"])
@@ -37,8 +38,7 @@ def _catalog_filters(
         stmt = stmt.where(Product.category_id == category_id)
     if product_id is not None:
         stmt = stmt.where(Offering.product_id == product_id)
-    if attribute_id is not None:
-        stmt = stmt.where(Product.attribute_id == attribute_id)
+    stmt = apply_attribute_filter(stmt, attribute_id)
     if min_price is not None:
         stmt = stmt.where(Offering.price_eur >= min_price)
     if max_price is not None:
@@ -58,7 +58,7 @@ def _price_bounds(min_price: Decimal | None, max_price: Decimal | None) -> None:
 async def price_range(
     category_id: str | None = Query(None, description="Scope to a category."),
     product_id: str | None = Query(None, description="Scope to a single product."),
-    attribute_id: str | None = Query(None, description="Scope to an attribute."),
+    attribute_id: str | None = Query(None, description='Scope to an attribute; "none" = without one.'),
     session: AsyncSession = Depends(get_session),
 ):
     """Available price range (EUR) for offerings matching the catalog filters."""
@@ -82,7 +82,7 @@ async def price_range(
 async def search_offerings(
     category_id: str | None = Query(None, description="Filter by category."),
     product_id: str | None = Query(None, description="Filter by a single product."),
-    attribute_id: str | None = Query(None, description="Filter by attribute."),
+    attribute_id: str | None = Query(None, description='Filter by attribute; "none" = without one.'),
     min_price: Decimal | None = Query(
         None, ge=0, description="Inclusive lower bound in EUR."
     ),
