@@ -42,7 +42,7 @@ export default function CatalogPage() {
     };
 
     fetchAll();
-  }, []);
+  }, [1000]);
 
   if (loading) {
     return (
