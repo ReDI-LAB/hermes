@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
-import {
-  Container,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  CircularProgress,
-  Box,
-} from '@mui/material';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+
 import { productAPI, categoryAPI, attributeAPI } from '../services/api';
 import type { Product, Category, Attribute } from '../types/index';
 
