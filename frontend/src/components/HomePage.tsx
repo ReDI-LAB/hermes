@@ -11,7 +11,6 @@ import Paper from '@mui/material/Paper';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 
-
 const categories = ['Drinks', 'Food', 'Ride', 'Game', 'Merchandise'];
 
 export default function HomePage() {
@@ -24,7 +23,7 @@ export default function HomePage() {
         sx={{ bgcolor: '#44b7c1', color: '#111' }}
       >
         <Toolbar sx={{ justifyContent: 'space-between' }}>
-          <Typography variant='subtitle2' fontWeight={600}>
+          <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
             Hermes
           </Typography>
           <IconButton edge='end' color='inherit' aria-label='menu'>
@@ -38,8 +37,12 @@ export default function HomePage() {
         <Typography
           variant='h5'
           align='center'
-          fontWeight={600}
-          sx={{ lineHeight: 1.25, bgcolor: '#1d3537', color: '#d8e9e7' }}
+          sx={{
+            lineHeight: 1.25,
+            bgcolor: '#1d3537',
+            color: '#d8e9e7',
+            fontWeight: 600,
+          }}
         >
           Find the best prices
           <br />
@@ -50,8 +53,12 @@ export default function HomePage() {
           variant='body2'
           align='center'
           color='text.secondary'
-          sx={{ 
-            mt: 2, mb: 4, bgcolor: '#1d3537', color: '#d8e9e7'}}
+          sx={{
+            mt: 2,
+            mb: 4,
+            bgcolor: '#1d3537',
+            color: '#d8e9e7',
+          }}
         >
           Search for a product, set your budget
           <br />
