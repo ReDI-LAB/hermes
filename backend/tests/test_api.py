@@ -68,7 +68,7 @@ def test_products_several_attributes_must_all_match(client):
     assert sorted(ids(hot_drinks, "product_id")) == ["P025", "P026"]  # Coffee, Hot Chocolate
 
     cold_alcoholic = client.get("/products", params={"attribute_id": ["A001", "A006"]}).json()
-    assert sorted(ids(cold_alcoholic, "product_id")) == ["P001", "P002", "P003", "P004"]
+    assert sorted(ids(cold_alcoholic, "product_id")) == ["P001", "P003"]  # P002/P004 not offered
 
     impossible = client.get("/products", params={"attribute_id": ["A005", "A006"]}).json()
     assert impossible == []  # nothing is both Hot and Cold
@@ -122,3 +122,72 @@ def test_search_and_price_with_several_attributes_count_each_offering_once(clien
 def test_search_rejects_min_above_max(client):
     r = client.get("/search", params={"min_price": 20, "max_price": 10})
     assert r.status_code == 400
+
+
+
+# Products in the seed data that no vendor sells (no offerings).
+UNOFFERED = {"P002", "P004", "P005"}  # Mass Weissbier, Radler, Alcohol-Free Beer
+
+
+def test_unoffered_products_hidden_from_product_filter(client):
+    products = ids(client.get("/products").json(), "product_id")
+    assert len(products) == 47
+    assert not UNOFFERED & set(products)
+
+
+def test_every_listed_product_has_search_results(client):
+    """The rule behind the filters: picking any product never ends empty."""
+    for p in client.get("/products", params={"category_id": "C001"}).json():
+        r = client.get("/search", params={"product_id": p["product_id"]}).json()
+        assert r["count"] > 0, f'{p["product_id"]} is listed but has no offerings'
+
+
+def test_lowest_price_one_row_per_offered_product(client):
+    rows = client.get("/products/lowest-price").json()
+    product_ids = [r["product"]["product_id"] for r in rows]
+    assert len(product_ids) == len(set(product_ids)) == 47
+    assert not UNOFFERED & set(product_ids)
+
+
+def test_lowest_price_is_the_cheapest_offering(client):
+    rows = client.get("/products/lowest-price", params={"category_id": "C001"}).json()
+    assert rows
+    for row in rows:
+        product_id = row["product"]["product_id"]
+        offerings = client.get("/search", params={"product_id": product_id, "limit": 200}).json()
+        prices = [Decimal(o["price_eur"]) for o in offerings["offerings"]]
+        assert Decimal(row["lowest_offering"]["price_eur"]) == min(prices)
+        assert row["offering_count"] == len(prices)
+
+
+def test_lowest_price_includes_vendor_and_area(client):
+    row = client.get("/products/lowest-price").json()[0]
+    vendor = row["lowest_offering"]["vendor"]
+    assert vendor["vendor_name"]
+    assert vendor["area"]["area_name"]
+
+
+def test_lowest_price_sorted_cheapest_first(client):
+    rows = client.get("/products/lowest-price").json()
+    prices = [Decimal(r["lowest_offering"]["price_eur"]) for r in rows]
+    assert prices == sorted(prices)
+
+
+def test_lowest_price_attribute_filter(client):
+    rows = client.get(
+        "/products/lowest-price", params={"attribute_id": ["A002", "A005"]}
+    ).json()
+    assert sorted(r["product"]["product_id"] for r in rows) == ["P025", "P026"]
+    for r in rows:
+        assert {"A002", "A005"} <= set(r["product"]["attribute_ids"])
+
+
+def test_search_default_page_holds_all_seed_offerings(client):
+    """Default page size is 100: without a limit, all 83 seed offerings fit."""
+    r = client.get("/search").json()
+    assert r["count"] == len(r["offerings"]) == 83
+
+
+def test_search_limit_still_capped(client):
+    r = client.get("/search", params={"limit": 500}).json()
+    assert len(r["offerings"]) == r["count"]  # 83 < MAX_PAGE_SIZE (200)
