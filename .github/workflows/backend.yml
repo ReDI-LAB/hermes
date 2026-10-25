@@ -1,0 +1,118 @@
+# Backend CI/CD for Project Hermes.
+#
+# Job 1 "test"    — every pull request into main and every push to main:
+#                   starts a throwaway PostgreSQL, applies backend/migrations
+#                   with Flyway, then runs the pytest suite against it.
+# Job 2 "migrate" — only on a push to main (= a merged pull request), and only
+#                   if "test" passed: applies new migrations to Supabase.
+#
+# Render deploys the API code by itself on every push to main; this workflow
+# does not touch Render.
+#
+# Repository secrets needed by "migrate"
+# (GitHub -> Settings -> Secrets and variables -> Actions):
+#   SUPABASE_DB_URL       jdbc:postgresql://<host>:5432/postgres?sslmode=require
+#   SUPABASE_DB_USER      e.g. postgres
+#   SUPABASE_DB_PASSWORD  the database password
+# Use Supabase's session connection (port 5432), not the transaction pooler (6543).
+
+name: Backend
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  workflow_dispatch: # adds a "Run workflow" button in the Actions tab
+
+# Never run two Supabase migrations at the same time.
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Migrations + API tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: hermes
+          POSTGRES_PASSWORD: hermes
+          POSTGRES_DB: hermes
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U hermes"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://hermes:hermes@localhost:5432/hermes
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Apply migrations with Flyway
+        run: |
+          docker run --rm --network host \
+            -v "${{ github.workspace }}/backend/migrations:/flyway/sql" \
+            flyway/flyway:11 \
+            -url=jdbc:postgresql://localhost:5432/hermes \
+            -user=hermes -password=hermes \
+            migrate
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: backend/.python-version
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests
+        working-directory: backend
+        run: pytest -v
+
+  migrate:
+    name: Apply migrations to Supabase
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Flyway migrate
+        env:
+          FLYWAY_URL: ${{ secrets.SUPABASE_DB_URL }}
+          FLYWAY_USER: ${{ secrets.SUPABASE_DB_USER }}
+          FLYWAY_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          docker run --rm \
+            -e FLYWAY_URL -e FLYWAY_USER -e FLYWAY_PASSWORD \
+            -v "${{ github.workspace }}/backend/migrations:/flyway/sql" \
+            flyway/flyway:11 \
+            -connectRetries=10 \
+            migrate
+
+      - name: Show migration status
+        env:
+          FLYWAY_URL: ${{ secrets.SUPABASE_DB_URL }}
+          FLYWAY_USER: ${{ secrets.SUPABASE_DB_USER }}
+          FLYWAY_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          docker run --rm \
+            -e FLYWAY_URL -e FLYWAY_USER -e FLYWAY_PASSWORD \
+            -v "${{ github.workspace }}/backend/migrations:/flyway/sql" \
+            flyway/flyway:11 \
+            info
