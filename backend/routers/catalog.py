@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from db import get_session
-from models import Attribute, Category, Product, ProductAttribute
+from models import Attribute, Category, Offering, Product, ProductAttribute
 from schemas import AttributeOut, CategoryOut, ProductOut
 
 router = APIRouter(tags=["catalog"])
@@ -28,6 +28,15 @@ ATTRIBUTE_FILTER_HELP = (
     "(e.g. ?attribute_id=A003&attribute_id=A005 = Vegan and Hot). "
     '"none" = products without any attribute; it cannot be combined.'
 )
+
+
+def is_offered():
+    """SQL condition: at least one vendor sells the current Product.
+
+    Products nobody sells are hidden from every filter, because choosing one
+    would always end in an empty search result.
+    """
+    return exists().where(Offering.product_id == Product.product_id)
 
 
 def _has_attribute(attribute_id: str):
@@ -67,8 +76,15 @@ def apply_attribute_filter(stmt: Select, attribute_ids: list[str] | None) -> Sel
 
 @router.get("/categories", response_model=list[CategoryOut])
 async def list_categories(session: AsyncSession = Depends(get_session)):
-    """Top-level filter categories, in display order."""
-    result = await session.execute(select(Category).order_by(Category.sort_order))
+    """Categories that have at least one offered product, in display order."""
+    stmt = (
+        select(Category)
+        .where(
+            exists().where(Product.category_id == Category.category_id, is_offered())
+        )
+        .order_by(Category.sort_order)
+    )
+    result = await session.execute(stmt)
     return result.scalars().all()
 
 
@@ -76,30 +92,30 @@ async def list_categories(session: AsyncSession = Depends(get_session)):
 async def list_attributes(
     category_id: str | None = Query(
         default=None,
-        description="Only attributes used by products in this category.",
+        description="Only attributes used by offered products in this category.",
     ),
     session: AsyncSession = Depends(get_session),
 ):
     """Attributes for the attribute filter.
 
-    With category_id: only attributes used by that category's products.
-    Without it: all attributes. In both cases an "N/A" entry
-    (attribute_id="none") is appended when matching products have no
-    attribute.
+    Only attributes of offered products (optionally within one category).
+    An "N/A" entry (attribute_id="none") is appended when some of those
+    products have no attribute.
     """
-    stmt = select(Attribute).order_by(Attribute.sort_order)
-    no_attribute_check = select(Product.product_id).where(_has_no_attributes())
+    used_by = exists().where(
+        ProductAttribute.attribute_id == Attribute.attribute_id,
+        ProductAttribute.product_id == Product.product_id,
+        is_offered(),
+    )
+    no_attribute_check = select(Product.product_id).where(
+        _has_no_attributes(), is_offered()
+    )
     if category_id is not None:
-        stmt = stmt.where(
-            exists().where(
-                ProductAttribute.attribute_id == Attribute.attribute_id,
-                ProductAttribute.product_id == Product.product_id,
-                Product.category_id == category_id,
-            )
-        )
+        used_by = used_by.where(Product.category_id == category_id)
         no_attribute_check = no_attribute_check.where(
             Product.category_id == category_id
         )
+    stmt = select(Attribute).where(used_by).order_by(Attribute.sort_order)
 
     attributes = [
         AttributeOut.model_validate(a)
@@ -120,9 +136,10 @@ async def list_products(
     ),
     session: AsyncSession = Depends(get_session),
 ):
-    """Products, optionally filtered by category and/or attributes."""
+    """Offered products, optionally filtered by category and/or attributes."""
     stmt = (
         select(Product)
+        .where(is_offered())
         .options(selectinload(Product.attributes))
         .order_by(Product.product_name, Product.variant)
     )

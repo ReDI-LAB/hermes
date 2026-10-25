@@ -4,6 +4,8 @@ GET /price  — min/max offering prices for the current catalog filters
               (used to draw the price slider).
 GET /search — offerings in that range, with vendor, product, area and
               activity details joined from the related tables.
+GET /products/lowest-price — every product with its cheapest offering and
+              that offering's vendor.
 """
 from __future__ import annotations
 
@@ -13,13 +15,20 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import aliased, selectinload
 
 from config import get_settings
 from db import get_session
 from models import Offering, Product, Vendor
 from routers.catalog import ATTRIBUTE_FILTER_HELP, apply_attribute_filter
-from schemas import OfferingOut, PriceRange, SearchResponse
+from schemas import (
+    LowestOfferingOut,
+    OfferingOut,
+    PriceRange,
+    ProductDetailOut,
+    ProductLowestPriceOut,
+    SearchResponse,
+)
 
 router = APIRouter(tags=["price"])
 
@@ -144,3 +153,66 @@ async def search_offerings(
         count=total,
         offerings=[OfferingOut.model_validate(row) for row in rows],
     )
+
+
+@router.get("/products/lowest-price", response_model=list[ProductLowestPriceOut])
+async def products_lowest_price(
+    category_id: str | None = Query(None, description="Filter by category."),
+    attribute_id: list[str] | None = Query(None, description=ATTRIBUTE_FILTER_HELP),
+    session: AsyncSession = Depends(get_session),
+):
+    """Every offered product with its cheapest offering and that vendor.
+
+    Products nobody sells are left out. Ties on price are broken by vendor
+    name, then offering_id, so the result is stable. Sorted cheapest first.
+    """
+    # Rank each product's offerings by price; rank 1 = the cheapest.
+    ranked = (
+        select(
+            Offering.offering_id,
+            Offering.product_id,
+            func.row_number()
+            .over(
+                partition_by=Offering.product_id,
+                order_by=(Offering.price_eur, Vendor.vendor_name, Offering.offering_id),
+            )
+            .label("rank"),
+            func.count()
+            .over(partition_by=Offering.product_id)
+            .label("offering_count"),
+        )
+        .join(Offering.vendor)
+        .subquery()
+    )
+    cheapest = aliased(Offering)
+
+    stmt = (
+        select(Product, cheapest, ranked.c.offering_count)
+        .join(
+            ranked, (ranked.c.product_id == Product.product_id) & (ranked.c.rank == 1)
+        )
+        .join(cheapest, cheapest.offering_id == ranked.c.offering_id)
+        .options(
+            selectinload(Product.category),
+            selectinload(Product.attributes),
+            selectinload(cheapest.vendor).selectinload(Vendor.area),
+        )
+    )
+    if category_id is not None:
+        stmt = stmt.where(Product.category_id == category_id)
+    stmt = apply_attribute_filter(stmt, attribute_id)
+    stmt = stmt.order_by(
+        cheapest.price_eur,
+        Product.product_name,
+        Product.variant,
+    )
+
+    rows = (await session.execute(stmt)).all()
+    return [
+        ProductLowestPriceOut(
+            product=ProductDetailOut.model_validate(product),
+            offering_count=count,
+            lowest_offering=LowestOfferingOut.model_validate(offering),
+        )
+        for product, offering, count in rows
+    ]

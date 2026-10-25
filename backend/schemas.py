@@ -169,3 +169,22 @@ class SearchResponse(BaseModel):
     count: int
     offerings: list[OfferingOut]
 
+
+
+class LowestOfferingOut(ORMModel):
+    """The cheapest offering of a product, with the vendor selling it."""
+
+    offering_id: str
+    price_eur: Decimal
+    is_new_this_year: bool
+    source: str | None = None
+    last_price_update: date | None = None
+    vendor: VendorOut
+
+
+class ProductLowestPriceOut(BaseModel):
+    """An offered product with its cheapest offering."""
+
+    product: ProductDetailOut
+    offering_count: int
+    lowest_offering: LowestOfferingOut
