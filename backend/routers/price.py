@@ -18,7 +18,7 @@ from sqlalchemy.orm import selectinload
 from config import get_settings
 from db import get_session
 from models import Offering, Product, Vendor
-from routers.catalog import apply_attribute_filter
+from routers.catalog import ATTRIBUTE_FILTER_HELP, apply_attribute_filter
 from schemas import OfferingOut, PriceRange, SearchResponse
 
 router = APIRouter(tags=["price"])
@@ -29,7 +29,7 @@ def _catalog_filters(
     *,
     category_id: str | None,
     product_id: str | None,
-    attribute_id: str | None,
+    attribute_id: list[str] | None,
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
 ) -> Select[Any]:
@@ -58,7 +58,7 @@ def _price_bounds(min_price: Decimal | None, max_price: Decimal | None) -> None:
 async def price_range(
     category_id: str | None = Query(None, description="Scope to a category."),
     product_id: str | None = Query(None, description="Scope to a single product."),
-    attribute_id: str | None = Query(None, description='Scope to an attribute; "none" = without one.'),
+    attribute_id: list[str] | None = Query(None, description=ATTRIBUTE_FILTER_HELP),
     session: AsyncSession = Depends(get_session),
 ):
     """Available price range (EUR) for offerings matching the catalog filters."""
@@ -82,7 +82,7 @@ async def price_range(
 async def search_offerings(
     category_id: str | None = Query(None, description="Filter by category."),
     product_id: str | None = Query(None, description="Filter by a single product."),
-    attribute_id: str | None = Query(None, description='Filter by attribute; "none" = without one.'),
+    attribute_id: list[str] | None = Query(None, description=ATTRIBUTE_FILTER_HELP),
     min_price: Decimal | None = Query(
         None, ge=0, description="Inclusive lower bound in EUR."
     ),
@@ -120,7 +120,7 @@ async def search_offerings(
         .options(
             selectinload(Offering.vendor).selectinload(Vendor.area),
             selectinload(Offering.product).selectinload(Product.category),
-            selectinload(Offering.product).selectinload(Product.attribute),
+            selectinload(Offering.product).selectinload(Product.attributes),
             selectinload(Offering.activity_details),
         )
     )
