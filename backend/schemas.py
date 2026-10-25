@@ -32,7 +32,7 @@ class ProductOut(ORMModel):
     variant: str | None = None
     unit: str | None = None
     is_traditional: bool
-    attribute_id: str | None = None
+    attribute_ids: list[str] = []  # empty = no attributes ("N/A")
 
 
 class PriceRange(BaseModel):
@@ -80,10 +80,10 @@ class ActivityDetailOut(ORMModel):
 
 
 class ProductDetailOut(ProductOut):
-    """Product plus joined category and attribute for search results."""
+    """Product plus joined category and attributes for search results."""
 
     category: CategoryOut | None = None
-    attribute: AttributeOut | None = None
+    attributes: list[AttributeOut] = []
 
 
 class OfferingOut(ORMModel):
@@ -137,19 +137,27 @@ class SearchResponse(BaseModel):
                             "variant": "1L",
                             "unit": "litre",
                             "is_traditional": True,
-                            "attribute_id": "A001",
+                            "attribute_ids": ["A001", "A006"],
                             "category": {
                                 "category_id": "C001",
                                 "category_name": "Drinks",
                                 "description": "All beverages",
                                 "sort_order": 1,
                             },
-                            "attribute": {
-                                "attribute_id": "A001",
-                                "attribute_name": "Alcoholic",
-                                "description": "Beer and other alcoholic beverages",
-                                "sort_order": 1,
-                            },
+                            "attributes": [
+                                {
+                                    "attribute_id": "A001",
+                                    "attribute_name": "Alcoholic",
+                                    "description": "Beer and other alcoholic beverages",
+                                    "sort_order": 1,
+                                },
+                                {
+                                    "attribute_id": "A006",
+                                    "attribute_name": "Cold",
+                                    "description": "Served cold or chilled",
+                                    "sort_order": 6,
+                                },
+                            ],
                         },
                         "activity_details": None,
                     }
@@ -160,3 +168,4 @@ class SearchResponse(BaseModel):
 
     count: int
     offerings: list[OfferingOut]
+
