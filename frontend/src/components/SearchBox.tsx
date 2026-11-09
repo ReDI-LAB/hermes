@@ -4,7 +4,7 @@ import Search from "@mui/icons-material/Search";
 import Close from "@mui/icons-material/Close";
 import { fetchSearch } from "../services/api";
 import { groupByProduct, matchesProductName, productTitle, rankByQuery } from "../types/group";
-import { categoryIcon, categoryLabel } from "../categoryUi";
+import { categoryIcon, categoryLabel } from "../categoryUI";
 import PricePill from "./PricePill";
 import type { ProductGroup } from "../types/types";
 import { c, fonts } from "../types/theme";
