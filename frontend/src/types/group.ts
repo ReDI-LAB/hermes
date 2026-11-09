@@ -1,4 +1,4 @@
-import type { Offering, Product, ProductGroup } from "../types/types";
+import type { Offering, Product, ProductGroup } from "./types";
 
 export type SortOrder = "asc" | "desc";
 
