@@ -1,7 +1,7 @@
 import type { Category, SearchParams, SearchResponse } from "../types/types";
 
 /** Server address, e.g. http://localhost:8000 (no trailing slash needed). */
-const BASE_URL: string = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
+const BASE_URL: string = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
 
 /** Paths of your routes (appended to BASE_URL). */
 export const ENDPOINTS = {
