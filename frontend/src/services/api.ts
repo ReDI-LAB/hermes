@@ -1,48 +1,61 @@
-import axios, { type AxiosInstance, AxiosError } from 'axios';
-import type { Product, Category, Attribute } from '../types';
+import type { Category, SearchParams, SearchResponse } from "../types/types";
 
-const API_BASE_URL = 'https://hermes-3skk.onrender.com/';
+/** Server address, e.g. http://localhost:8000 (no trailing slash needed). */
+const BASE_URL: string = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
 
-const api: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 10000,
-});
+/** Paths of your routes (appended to BASE_URL). */
+export const ENDPOINTS = {
+  categories: "/categories",
+  search: "/search",
+};
 
-// Centralized error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => {
-    const message = error.response?.data ?? error.message;
-    console.error(`APi error [${error.config?.url}]:`, message);
-    return Promise.reject(error);
+/**
+ * Query-parameter names sent to GET /search.
+ * Example request:  /search?category_id=C001&attribute_id=A001&max_price=15&q=helles
+ * Change the values on the right if your backend uses different names.
+ */
+export const PARAMS = {
+  query: "q", // text typed in the search bar
+  categoryId: "category_id", // Drinks, Food, ...
+  attributeId: "attribute_id", // filter chip: Alcoholic, Vegan, ...
+  maxPrice: "max_price", // budget dialog
+};
+
+type Query = Record<string, string | number | undefined>;
+
+/** Sends a GET request and returns the parsed JSON. Empty values are not added to the URL. */
+async function getJson<T>(path: string, query: Query = {}, signal?: AbortSignal): Promise<T> {
+  if (!BASE_URL) {
+    throw new Error("VITE_API_BASE_URL is not set. Add it to the .env file and restart `npm run dev`.");
   }
-);
 
-//get aLL products
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== "") params.set(key, String(value));
+  }
+  const queryString = params.toString();
 
-export const productAPI = {
-  getProducts: async (): Promise<Product[]> => {
-    const { data } = await api.get<Product[]>('/products');
-    return data;
-  },
+  const response = await fetch(`${BASE_URL}${path}${queryString ? `?${queryString}` : ""}`, { signal });
+  if (!response.ok) throw new Error(`Request to ${path} failed (${response.status})`);
+  return response.json() as Promise<T>;
+}
 
-};
+/** GET /categories */
+export async function fetchCategories(signal?: AbortSignal): Promise<Category[]> {
+  const categories = await getJson<Category[]>(ENDPOINTS.categories, {}, signal);
+  return [...categories].sort((a, b) => a.sort_order - b.sort_order);
+}
 
-export const categoryAPI = {
-  getCategories: async (): Promise<Category[]> => {
-    const { data } = await api.get<Category[]>('/categories');
-    return data;
-  },
-
-};
-
-export const attributeAPI = {
-  getAttributes: async (): Promise<Attribute[]> => {
-    const { data } = await api.get<Attribute[]>('/attributes');
-    return data;
-  },
-
-};
+/** GET /search – the backend applies the filters and returns { count, offerings }. */
+export function fetchSearch(params: SearchParams, signal?: AbortSignal): Promise<SearchResponse> {
+  return getJson<SearchResponse>(
+    ENDPOINTS.search,
+    {
+      [PARAMS.query]: params.query,
+      [PARAMS.categoryId]: params.categoryId,
+      [PARAMS.attributeId]: params.attributeId,
+      [PARAMS.maxPrice]: params.maxPrice,
+    },
+    signal,
+  );
+}
