@@ -39,25 +39,25 @@ export interface Product {
   is_traditional: boolean;
   attribute_ids: string[];
   category: Category;
-  attribute: Attribute[];
+  attributes: Attribute[];
 }
 
 export interface ActivityDetails {
-  offer_id: string;
-  min_age: number;
+  offering_id: string;
+  min_age: number | null;
   min_height_cm: number | null;
   max_height_cm: number | null;
-  trill_level: string;
+  thrill_level: string;
   family_friendly: boolean;
   access_note: string;
 }
 
 export interface Offering {
-  offer_id: string;
+  offering_id: string;
   vendor_id: string;
   product_id: string;
-  price_eu: string;
-  in_new_this_year: boolean;
+  price_eur: string; // npr. "14.90"
+  is_new_this_year: boolean;
   source: string;
   last_price_update: string;
   vendor: Vendor;
@@ -77,8 +77,7 @@ export interface SearchParams {
   maxPrice?: number;
 }
 
-// A product with all of its offerings (vendors) – computed in the browser 
-
+/** A product with all of its offerings (vendors) – computed in the browser */
 export interface ProductGroup {
   product: Product;
   minPrice: number;
