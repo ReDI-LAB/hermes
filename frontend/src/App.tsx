@@ -6,6 +6,9 @@ import BrowseScreen from "./components/BrowseScreen";
 import About from "./components/About";
 import type { ProductGroup } from "./types/types";
 
+//console.log("Variable:", import.meta.env.VITE_VERCEL_ENV);
+//console.log("Global in app:", __APP_ENV__);
+
 type View =
   | { name: "home" }
   | { name: "about" }
