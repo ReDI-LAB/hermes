@@ -1,7 +1,7 @@
 import type { Category, SearchParams, SearchResponse } from "../types/types";
 
 /** Server address, e.g. http://localhost:8000 (no trailing slash needed). */
-const BASE_URL = import.meta.env.VITE_VERCEL_ENV;
+const BASE_URL = import.meta.env.VITE_VERCEL_ENV || "http://localhost:8000";
 
 /** Paths of your routes (appended to BASE_URL). */
 export const ENDPOINTS = {

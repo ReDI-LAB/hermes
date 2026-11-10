@@ -63,7 +63,7 @@ export default defineConfig(({ mode }) => {
       // Proxy sluzi samo za lokalni razvoj (development) da izbegnes CORS probleme sa FastAPI-jem
       proxy: {
         '/api': {
-          target: env.VITE_API_BASE_URL || 'http://localhost:8000',
+          target: env.VITE_VERCEL_ENV || 'http://localhost:8000',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
