@@ -34,7 +34,14 @@ export default defineConfig(({ mode }) => {
     },
     // Example: use an env var to set the dev server port conditionally.
     server: {
-      port: env.APP_PORT ? Number(env.APP_PORT) : 5173,
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
     },
-  }
-})
+  },
+}
+});
