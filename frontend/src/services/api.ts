@@ -1,7 +1,7 @@
 import type { Category, SearchParams, SearchResponse, Offering } from "../types/types";
 
 /** Server address, e.g. https://api.example.com (a trailing slash is removed). */
-const API_BASE_URL: string = (import.meta.env.VITE_API_URL ?? "").trim().replace(/\/+$/, "");
+const API_BASE_URL: string = (import.meta.env.VITE_API_BASE_URL ?? "").trim().replace(/\/+$/, "");
 
 console.log(API_BASE_URL);
  
