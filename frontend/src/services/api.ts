@@ -2,8 +2,6 @@ import type { Category, SearchParams, SearchResponse, Offering } from "../types/
 
 /** Server address, e.g. https://api.example.com (a trailing slash is removed). */
 const API_BASE_URL: string = (import.meta.env.VITE_API_BASE_URL ?? "").trim().replace(/\/+$/, "");
-
-console.log(API_BASE_URL);
  
 
 /** Paths of your routes (appended to BASE_URL). */
