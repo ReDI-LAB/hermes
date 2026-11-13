@@ -1,0 +1,16 @@
+{
+  "services": {
+    "frontend": { "root": "frontend/", "framework": "react" },
+    "backend": { "root": "backend/", "entrypoint": "main:app" }
+  },
+  "rewrites": [
+    {
+      "source": "/svc/api/:path*",
+      "destination": { "service": "backend" }
+    },
+    {
+      "source": "/(.*)",
+      "destination": { "service": "frontend" }
+    }
+  ]
+}

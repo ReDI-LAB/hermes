@@ -1,8 +1,11 @@
 import type { Category, SearchParams, SearchResponse, Offering } from "../types/types";
 
 /** Server address, e.g. https://api.example.com (a trailing slash is removed). */
-const BASE_URL: string = (import.meta.env.VITE_API_BASE_URL ?? "").trim().replace(/\/+$/, "");
+const API_BASE_URL: string = (import.meta.env.VITE_API_URL ?? "").trim().replace(/\/+$/, "");
+
+console.log(API_BASE_URL);
  
+
 /** Paths of your routes (appended to BASE_URL). */
 export const ENDPOINTS = {
   categories: "/categories",
@@ -32,17 +35,17 @@ function buildUrl(path: string, query: Query): string {
     if (value !== undefined && value !== "") params.set(key, String(value));
   }
   const queryString = params.toString();
-  return `${BASE_URL}${path}${queryString ? `?${queryString}` : ""}`;
+  return `${API_BASE_URL}${path}${queryString ? `?${queryString}` : ""}`;
 }
 
 /** Sends a GET request and returns the JSON. Every failure gets a message that says what to fix. */
 async function getJson<T>(path: string, query: Query = {}, signal?: AbortSignal): Promise<T> {
-  if (!BASE_URL) {
+  if (!API_BASE_URL) {
     throw new Error("VITE_API_BASE_URL is not set. Add it to .env (local) or to the Vercel environment variables, then rebuild.");
   }
   // A page opened over https cannot call an http:// API ("mixed content"), so say it clearly.
-  if (globalThis.location?.protocol === "https:" && BASE_URL.startsWith("http://")) {
-    throw new Error(`The API address ${BASE_URL} must start with https:// because this site uses https.`);
+  if (globalThis.location?.protocol === "https:" && API_BASE_URL.startsWith("http://")) {
+    throw new Error(`The API address ${API_BASE_URL} must start with https:// because this site uses https.`);
   }
 
   const url = buildUrl(path, query);
