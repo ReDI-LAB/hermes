@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 export function useAsync<T>(fn: (signal: AbortSignal) => Promise<T>, deps: unknown[]) {
   const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
