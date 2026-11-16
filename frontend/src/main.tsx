@@ -6,7 +6,10 @@ import "@fontsource/barlow/500.css";
 import "@fontsource/barlow/600.css";
 import "@fontsource/barlow-condensed/600.css";
 import "@fontsource/barlow-condensed/700.css";
-import "@fontsource/unifrakturcook/700.css";
+import "@fontsource-variable/grenze-gotisch";
+import "@fontsource/grenze-gotisch/400.css";
+import "@fontsource/grenze-gotisch/500.css";
+import "@fontsource/grenze-gotisch/600.css";
 import { theme } from "./types/theme";
 import App from "./App";
 

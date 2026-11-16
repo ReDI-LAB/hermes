@@ -17,7 +17,7 @@ export const c = {
 export const fonts = {
   display: '"Barlow Condensed", "Barlow", sans-serif',
   body: '"Barlow", system-ui, sans-serif',
-  fraktur: '"UnifrakturCook", serif',
+  fraktur: '"Grenze Gotisch", serif',
 };
 
 const svg = (path: string) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'>${path}</svg>`)}")`;
