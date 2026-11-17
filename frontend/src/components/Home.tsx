@@ -20,12 +20,12 @@ export default function Home({ onCategory, onSearch, onPick }: Props) {
 
   return (
     <Box sx={{ pt: 4, pb: 6 }}>
-      <Typography sx={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 15, letterSpacing: ".2em", color: c.gold }}>
+      <Typography sx={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 12, letterSpacing: ".14em", color: c.gold }}>
         THERESIENWIESE · MÜNCHEN
       </Typography>
-      <Typography component="h1" sx={{ fontFamily: fonts.display, fontWeight: 700, fontSize: { xs: 33, sm: 54 }, lineHeight: 1.02, color: c.ink, mt: 1 }}>
+      <Typography component="h1" sx={{ fontFamily: fonts.display, fontWeight: 800, fontSize: { xs: 46, sm: 46 }, lineHeight: 0.88, color: c.ink, mt: 1 }}>
         FIND THE BEST PRICES AT
-        <Box component="span" sx={{ display: "block", fontFamily: fonts.fraktur, fontWeight: 700, fontSize: { xs: 40, sm: 60 }, lineHeight: 1.1 }}>
+        <Box component="span" sx={{ display: "block", fontFamily: fonts.fraktur, fontWeight: 700, fontSize: { xs: '1.02em', sm: '1.02em' }, lineHeight: 1.0 }}>
           Oktoberfest
         </Box>
       </Typography>
