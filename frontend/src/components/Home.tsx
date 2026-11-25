@@ -12,60 +12,214 @@ interface Props {
   onCategory: (categoryId: string) => void;
   onSearch: (q: string) => void;
   onPick: (g: ProductGroup) => void;
+  isTabletOrUp?: boolean;
 }
 
-export default function Home({ onCategory, onSearch, onPick }: Props) {
+export default function Home({
+  onCategory,
+  onSearch,
+  onPick,
+  isTabletOrUp = false,
+}: Props) {
   const categories = useAsync((s) => fetchCategories(s), []);
   const list = categories.data ?? [];
 
   return (
-    <Box sx={{ pt: 4, pb: 6 }}>
-      <Typography sx={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 15, letterSpacing: ".2em", color: c.gold }}>
+    <Box
+      sx={{
+        pt: isTabletOrUp ? 4 : 2.5,
+        pb: isTabletOrUp ? 6 : 4,
+        width: "100%",
+        minWidth: 0,
+      }}
+    >
+      <Typography
+        sx={{
+          fontFamily: fonts.display,
+          fontWeight: 700,
+          fontSize: isTabletOrUp ? 15 : 12,
+          letterSpacing: isTabletOrUp ? ".2em" : ".14em",
+          color: c.gold,
+        }}
+      >
         THERESIENWIESE · MÜNCHEN
       </Typography>
-      <Typography component="h1" sx={{ fontFamily: fonts.display, fontWeight: 700, fontSize: { xs: 33, sm: 54 }, lineHeight: 1.02, color: c.ink, mt: 1 }}>
+
+      <Typography
+        component="h1"
+        sx={{
+          fontFamily: fonts.display,
+          fontWeight: 700,
+          fontSize: isTabletOrUp ? 54 : 30,
+          lineHeight: 1.04,
+          color: c.ink,
+          mt: 1,
+          wordBreak: "break-word",
+        }}
+      >
         FIND THE BEST PRICES AT
-        <Box component="span" sx={{ display: "block", fontFamily: fonts.fraktur, fontWeight: 700, fontSize: { xs: 40, sm: 60 }, lineHeight: 1.1 }}>
+        <Box
+          component="span"
+          sx={{
+            display: "block",
+            fontFamily: fonts.fraktur,
+            fontWeight: 700,
+            fontSize: isTabletOrUp ? 60 : 36,
+            lineHeight: 1.12,
+          }}
+        >
           Oktoberfest
         </Box>
       </Typography>
-      <Typography sx={{ color: c.muted, fontSize: { xs: 18, sm: 20 }, lineHeight: 1.5, mt: 2.5, mb: 4, maxWidth: 380 }}>
+
+      <Typography
+        sx={{
+          color: c.muted,
+          fontSize: isTabletOrUp ? 20 : 16,
+          lineHeight: 1.5,
+          mt: 2,
+          mb: isTabletOrUp ? 4 : 3,
+          maxWidth: 380,
+          width: "100%",
+        }}
+      >
         Search for a product, set your budget and compare vendors.
       </Typography>
 
-      <SearchBox onSubmit={onSearch} onPick={onPick} />
+      <Box sx={{ width: "100%", minWidth: 0 }}>
+        <SearchBox onSubmit={onSearch} onPick={onPick} />
+      </Box>
 
-      <Typography sx={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 15, letterSpacing: ".2em", color: "#4C607A", mt: 5, mb: 1.5 }}>
+      <Typography
+        sx={{
+          fontFamily: fonts.display,
+          fontWeight: 700,
+          fontSize: isTabletOrUp ? 15 : 12.5,
+          letterSpacing: isTabletOrUp ? ".2em" : ".15em",
+          color: "#4C607A",
+          mt: isTabletOrUp ? 5 : 3.5,
+          mb: 1.5,
+        }}
+      >
         BROWSE THE WIESN
       </Typography>
 
-      {categories.error && <Alert severity="error">Couldn’t load categories. {categories.error}</Alert>}
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.75 }}>
-        {categories.loading && [0, 1, 2, 3, 4].map((i) => <Skeleton key={i} variant="rounded" height={64} sx={{ gridColumn: i === 4 ? "1 / -1" : undefined }} />)}
+      {categories.error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Couldn’t load categories. {categories.error}
+        </Alert>
+      )}
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: isTabletOrUp ? 1.75 : 1.1,
+          width: "100%",
+          minWidth: 0,
+        }}
+      >
+        {categories.loading &&
+          [0, 1, 2, 3, 4].map((i) => (
+            <Skeleton
+              key={i}
+              variant="rounded"
+              height={isTabletOrUp ? 64 : 54}
+              sx={{
+                width: "100%",
+                minWidth: 0,
+                borderRadius: 4,
+                gridColumn: i === 4 ? "1 / -1" : undefined,
+              }}
+            />
+          ))}
+
         {list.map((cat, i) => (
           <ButtonBase
             key={cat.category_id}
             onClick={() => onCategory(cat.category_id)}
             sx={{
-              gridColumn: list.length % 2 === 1 && i === list.length - 1 ? "1 / -1" : undefined,
-              display: "flex", alignItems: "center", gap: 2, px: 2.5, height: 64, borderRadius: 4,
-              bgcolor: c.tile, color: "#fff", border: `1.5px solid ${c.gold}66`, justifyContent: "flex-start",
-              boxShadow: "0 4px 10px rgba(8,32,63,.18)", transition: "transform .12s, border-color .12s",
-              "&:hover": { borderColor: c.goldBright, transform: "translateY(-1px)" },
+              width: "100%",
+              minWidth: 0,
+              overflow: "hidden",
+              gridColumn:
+                list.length % 2 === 1 && i === list.length - 1 ? "1 / -1" : undefined,
+              display: "flex",
+              alignItems: "center",
+              gap: isTabletOrUp ? 2 : 1,
+              px: isTabletOrUp ? 2.5 : 1.4,
+              height: isTabletOrUp ? 64 : 54,
+              borderRadius: 4,
+              bgcolor: c.tile,
+              color: "#fff",
+              border: `1.5px solid ${c.gold}66`,
+              justifyContent: "flex-start",
+              boxShadow: "0 4px 10px rgba(8,32,63,.18)",
+              transition: "transform .12s, border-color .12s",
+              "&:hover": {
+                borderColor: c.goldBright,
+                transform: "translateY(-1px)",
+              },
             }}
           >
-            <Box sx={{ color: c.goldBright, display: "grid" }}>{categoryIcon(cat.category_id)}</Box>
-            <Typography sx={{ flex: 1, textAlign: "left", fontFamily: fonts.display, fontWeight: 700, fontSize: 22, letterSpacing: ".04em" }}>
+            <Box
+              sx={{
+                color: c.goldBright,
+                display: "grid",
+                placeItems: "center",
+                flexShrink: 0,
+              }}
+            >
+              {categoryIcon(cat.category_id)}
+            </Box>
+
+            <Typography
+              noWrap
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                textAlign: "left",
+                fontFamily: fonts.display,
+                fontWeight: 700,
+                fontSize: isTabletOrUp ? 22 : 15.5,
+                letterSpacing: isTabletOrUp ? ".04em" : ".02em",
+              }}
+            >
               {categoryLabel(cat).toUpperCase()}
             </Typography>
-            <ChevronRight sx={{ color: c.goldBright }} />
+
+            <ChevronRight
+              sx={{
+                color: c.goldBright,
+                flexShrink: 0,
+                fontSize: isTabletOrUp ? 24 : 20,
+              }}
+            />
           </ButtonBase>
         ))}
       </Box>
 
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mt: 5, color: c.muted }}>
-        <BakeryDining sx={{ color: c.gold }} />
-        <Typography>Sample prices in line with recent Wiesn ranges</Typography>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 1,
+          mt: isTabletOrUp ? 5 : 3.5,
+          px: 1,
+          color: c.muted,
+          minWidth: 0,
+        }}
+      >
+        <BakeryDining sx={{ color: c.gold, flexShrink: 0 }} />
+        <Typography
+          sx={{
+            fontSize: isTabletOrUp ? "1rem" : "0.875rem",
+            textAlign: "center",
+          }}
+        >
+          Sample prices in line with recent Wiesn ranges
+        </Typography>
       </Box>
     </Box>
   );
