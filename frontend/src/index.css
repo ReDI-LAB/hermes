@@ -1,3 +1,19 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -51,7 +67,7 @@
 }
 
 #root {
-  width: 1126px;
+  width: 100%;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
@@ -60,6 +76,7 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  overflow-x: clip;
 }
 
 body {
