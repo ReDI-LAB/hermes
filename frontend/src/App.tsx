@@ -16,7 +16,7 @@ export default function App() {
   const [prev, setPrev] = useState<View>({ name: "home" });
 
   const theme = useTheme();
-  // Mobile-first
+  // Mobile-first responsive
   const isTabletOrUp = useMediaQuery(theme.breakpoints.up("sm"));
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
