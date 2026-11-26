@@ -23,7 +23,7 @@ class Settings(BaseSettings):
         default_factory=lambda: ["*"],
         description="Allowed CORS origins for the (future) frontend.",
     )
-    default_page_size: int = 50
+    default_page_size: int = 100
     max_page_size: int = 200
 
 

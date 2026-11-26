@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Boolean, ForeignKey, Integer, Numeric, Text
+from sqlalchemy import Boolean, ForeignKey, Integer, Numeric, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -36,7 +36,9 @@ class Attribute(Base):
     description: Mapped[str | None] = mapped_column(Text)
     sort_order: Mapped[int] = mapped_column(Integer)
 
-    products: Mapped[list[Product]] = relationship(back_populates="attribute")
+    products: Mapped[list[Product]] = relationship(
+        secondary="map_products_attributes", back_populates="attributes", viewonly=True
+    )
 
 
 class Area(Base):
@@ -72,13 +74,34 @@ class Product(Base):
     variant: Mapped[str | None] = mapped_column(Text)
     unit: Mapped[str | None] = mapped_column(Text)
     is_traditional: Mapped[bool] = mapped_column(Boolean)
-    attribute_id: Mapped[str | None] = mapped_column(
-        ForeignKey("attributes.attribute_id")
-    )
 
     category: Mapped[Category] = relationship(back_populates="products")
-    attribute: Mapped[Attribute | None] = relationship(back_populates="products")
+    # A product can have several attributes (e.g. Hot + Vegan) or none.
+    attributes: Mapped[list[Attribute]] = relationship(
+        secondary="map_products_attributes",
+        back_populates="products",
+        order_by="Attribute.sort_order",
+        viewonly=True,
+    )
     offerings: Mapped[list[Offering]] = relationship(back_populates="product")
+
+    @property
+    def attribute_ids(self) -> list[str]:
+        """IDs of this product's attributes. Needs `attributes` loaded."""
+        return [a.attribute_id for a in self.attributes]
+
+
+class ProductAttribute(Base):
+    """Mapping table: which attributes a product has (product n:m attribute)."""
+
+    __tablename__ = "map_products_attributes"
+    __table_args__ = (
+        UniqueConstraint("product_id", "attribute_id", name="uq_map_products_attributes"),
+    )
+
+    product_attribute_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    product_id: Mapped[str] = mapped_column(ForeignKey("products.product_id"))
+    attribute_id: Mapped[str] = mapped_column(ForeignKey("attributes.attribute_id"))
 
 
 class Offering(Base):
